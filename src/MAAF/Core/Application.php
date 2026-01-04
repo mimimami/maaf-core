@@ -111,6 +111,8 @@ final class Application
 
         // 1. Build DI container
         $containerBuilder = new ContainerBuilder();
+        $containerBuilder->useAutowiring(true);
+        $containerBuilder->useAnnotations(false);
         
         $servicesFile = $this->config['services'] ?? null;
         if ($servicesFile && file_exists($servicesFile)) {
