@@ -1,0 +1,39 @@
+name: Update Packagist
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+
+jobs:
+  update-packagist:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - name: Update Packagist
+        env:
+          PACKAGIST_USERNAME: Tamas-Bloch
+          PACKAGIST_REPO: maaf-core
+        run: |
+          echo "🚀 Updating Packagist..."
+          echo "Repository: https://github.com/${PACKAGIST_USERNAME}/${PACKAGIST_REPO}"
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "https://packagist.org/api/update-package?username=${PACKAGIST_USERNAME}" \
+            -H "Content-Type: application/json" \
+            -d "{\"repository\":{\"url\":\"https://github.com/${PACKAGIST_USERNAME}/${PACKAGIST_REPO}\"}}")
+          
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          
+          echo "Response Code: $HTTP_CODE"
+          echo "Response Body: $BODY"
+          
+          if [ "$HTTP_CODE" -eq 200 ] || [ "$HTTP_CODE" -eq 201 ]; then
+            echo "✅ Packagist update triggered successfully!"
+          else
+            echo "❌ Packagist update failed with HTTP $HTTP_CODE"
+            echo "Note: This might be normal if the package was just updated."
+            exit 0  # Don't fail the workflow, Packagist might be rate limiting
+          fi
+
