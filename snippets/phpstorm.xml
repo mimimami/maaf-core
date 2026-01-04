@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templateSet group="MAAF Core">
+    <template name="maaf-app" value="&lt;?php&#10;require_once __DIR__ . '/../vendor/autoload.php';&#10;&#10;use MAAF\Core\Application;&#10;&#10;$app = new Application(__DIR__ . '/..');&#10;$app->run();" description="MAAF Core Application bootstrap" toReformat="false" toShortenFQNames="true">
+        <context>
+            <option name="PHP" value="true" />
+        </context>
+    </template>
+    <template name="maaf-controller" value="&lt;?php&#10;&#10;declare(strict_types=1);&#10;&#10;namespace $NAMESPACE$\Controllers;&#10;&#10;use MAAF\Core\Http\Request;&#10;use MAAF\Core\Http\Response;&#10;&#10;final class $CLASS_NAME$&#10;{&#10;    public function index(Request $request): Response&#10;    {&#10;        return Response::json([&#10;            'status' => 'ok'&#10;        ]);&#10;    }&#10;}" description="MAAF Core Controller template" toReformat="true" toShortenFQNames="true">
+        <variable name="NAMESPACE" expression="" defaultValue="App\Modules\MyModule" alwaysStopAt="true" />
+        <variable name="CLASS_NAME" expression="" defaultValue="MyController" alwaysStopAt="true" />
+        <context>
+            <option name="PHP" value="true" />
+        </context>
+    </template>
+    <template name="maaf-module" value="&lt;?php&#10;&#10;declare(strict_types=1);&#10;&#10;namespace $NAMESPACE$;&#10;&#10;use DI\ContainerBuilder;&#10;use MAAF\Core\Routing\Router;&#10;&#10;final class Module&#10;{&#10;    public static function registerServices(ContainerBuilder $builder): void&#10;    {&#10;        // Register services&#10;    }&#10;&#10;    public static function registerRoutes(Router $router): void&#10;    {&#10;        // Register routes&#10;    }&#10;}" description="MAAF Core Module template" toReformat="true" toShortenFQNames="true">
+        <variable name="NAMESPACE" expression="" defaultValue="App\Modules\MyModule" alwaysStopAt="true" />
+        <context>
+            <option name="PHP" value="true" />
+        </context>
+    </template>
+    <template name="maaf-middleware" value="&lt;?php&#10;&#10;declare(strict_types=1);&#10;&#10;namespace $NAMESPACE$;&#10;&#10;use MAAF\Core\Http\MiddlewareInterface;&#10;use MAAF\Core\Http\Request;&#10;use MAAF\Core\Http\Response;&#10;&#10;final class $CLASS_NAME$ implements MiddlewareInterface&#10;{&#10;    public function handle(Request $request, callable $next): Response&#10;    {&#10;        // Before controller&#10;        $response = $next($request);&#10;        // After controller&#10;        return $response;&#10;    }&#10;}" description="MAAF Core Middleware template" toReformat="true" toShortenFQNames="true">
+        <variable name="NAMESPACE" expression="" defaultValue="App\Core\Middleware" alwaysStopAt="true" />
+        <variable name="CLASS_NAME" expression="" defaultValue="MyMiddleware" alwaysStopAt="true" />
+        <context>
+            <option name="PHP" value="true" />
+        </context>
+    </template>
+</templateSet>
+

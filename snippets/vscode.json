@@ -1,0 +1,93 @@
+{
+    "MAAF Application": {
+        "prefix": "maaf-app",
+        "body": [
+            "<?php",
+            "require_once __DIR__ . '/../vendor/autoload.php';",
+            "",
+            "use MAAF\\Core\\Application;",
+            "",
+            "$app = new Application(__DIR__ . '/..');",
+            "$app->run();"
+        ],
+        "description": "MAAF Core Application bootstrap"
+    },
+    "MAAF Controller": {
+        "prefix": "maaf-controller",
+        "body": [
+            "<?php",
+            "",
+            "declare(strict_types=1);",
+            "",
+            "namespace ${1:App\\Modules\\MyModule}\\Controllers;",
+            "",
+            "use MAAF\\Core\\Http\\Request;",
+            "use MAAF\\Core\\Http\\Response;",
+            "",
+            "final class ${2:MyController}",
+            "{",
+            "    public function ${3:index}(Request $request): Response",
+            "    {",
+            "        return Response::json([",
+            "            'status' => 'ok'",
+            "        ]);",
+            "    }",
+            "}"
+        ],
+        "description": "MAAF Core Controller template"
+    },
+    "MAAF Module": {
+        "prefix": "maaf-module",
+        "body": [
+            "<?php",
+            "",
+            "declare(strict_types=1);",
+            "",
+            "namespace ${1:App\\Modules\\MyModule};",
+            "",
+            "use DI\\ContainerBuilder;",
+            "use MAAF\\Core\\Routing\\Router;",
+            "",
+            "final class Module",
+            "{",
+            "    public static function registerServices(ContainerBuilder $builder): void",
+            "    {",
+            "        // Register services",
+            "    }",
+            "",
+            "    public static function registerRoutes(Router $router): void",
+            "    {",
+            "        // Register routes",
+            "    }",
+            "}"
+        ],
+        "description": "MAAF Core Module template"
+    },
+    "MAAF Middleware": {
+        "prefix": "maaf-middleware",
+        "body": [
+            "<?php",
+            "",
+            "declare(strict_types=1);",
+            "",
+            "namespace ${1:App\\Core\\Middleware};",
+            "",
+            "use MAAF\\Core\\Http\\MiddlewareInterface;",
+            "use MAAF\\Core\\Http\\Request;",
+            "use MAAF\\Core\\Http\\Response;",
+            "",
+            "final class ${2:MyMiddleware} implements MiddlewareInterface",
+            "{",
+            "    public function handle(Request $request, callable $next): Response",
+            "    {",
+            "        // Before controller",
+            "        $response = $next($request);",
+            "        // After controller",
+            "        return $response;",
+            "    }",
+            "}"
+        ],
+        "description": "MAAF Core Middleware template"
+    }
+}
+

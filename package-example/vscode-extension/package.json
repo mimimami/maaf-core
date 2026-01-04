@@ -1,0 +1,40 @@
+{
+    "name": "maaf-core-snippets",
+    "displayName": "MAAF Core Snippets",
+    "description": "Code snippets for MAAF Core framework - Modular Application Architecture Framework",
+    "version": "1.0.0",
+    "publisher": "bloch-tamas",
+    "engines": {
+        "vscode": "^1.60.0"
+    },
+    "categories": [
+        "Snippets",
+        "Programming Languages"
+    ],
+    "keywords": [
+        "php",
+        "maaf",
+        "framework",
+        "snippets",
+        "modular"
+    ],
+    "contributes": {
+        "snippets": [
+            {
+                "language": "php",
+                "path": "./snippets/php.json"
+            }
+        ]
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/yourusername/maaf-core.git"
+    },
+    "bugs": {
+        "url": "https://github.com/yourusername/maaf-core/issues"
+    },
+    "homepage": "https://github.com/yourusername/maaf-core#readme",
+    "license": "MIT",
+    "icon": "icon.png"
+}
+
