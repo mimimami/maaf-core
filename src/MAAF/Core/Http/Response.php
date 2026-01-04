@@ -140,14 +140,14 @@ final class Response implements ResponseInterface
         return implode(', ', $header);
     }
 
-    public function withHeader(string $name, string|array $value): ResponseInterface
+    public function withHeader(string $name, $value): ResponseInterface
     {
         $new = clone $this;
         $new->headers[$name] = is_array($value) ? $value : [$value];
         return $new;
     }
 
-    public function withAddedHeader(string $name, string|array $value): ResponseInterface
+    public function withAddedHeader(string $name, $value): ResponseInterface
     {
         $new = clone $this;
         if (!isset($new->headers[$name])) {
