@@ -263,7 +263,4 @@ See [IDE Support Documentation](docs/ide-support.md) for details.
 
 ## License
 
-MIT
-
-"# Test GitHub Actions" 
-"# Test GitHub Actions" 
+MIT 
