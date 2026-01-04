@@ -45,12 +45,12 @@ git push origin v1.0.0
 
 #### Lépés 2: GitHub Webhook Beállítása
 
-1. Menj a GitHub repository-hoz: https://github.com/Tamas-Bloch/maaf-core
+1. Menj a GitHub repository-hoz: https://github.com/mimimami/maaf-core
 2. Kattints **Settings** (felső menü)
 3. Kattints **Webhooks** (bal oldali menü)
 4. Kattints **Add webhook**
 5. Töltsd ki:
-   - **Payload URL:** `https://packagist.org/api/github?username=Tamas-Bloch`
+   - **Payload URL:** `https://packagist.org/api/github?username=mimimami&repository=maaf-core`
    - **Content type:** `application/json`
    - **Secret:** (hagyd üresen, vagy add meg a Packagist API token-t)
    - **Which events:** Válaszd ki: **Just the push event**
@@ -62,7 +62,7 @@ Ha a fenti nem működik, használd a Packagist webhook URL-t:
 
 1. Packagist-en: https://packagist.org/packages/maaf/core
 2. Kattints **"Settings"** vagy **"Update"**
-3. Másold ki a **"GitHub Hook URL"**-t (pl. `https://packagist.org/api/github?username=Tamas-Bloch&repository=maaf-core`)
+3. Másold ki a **"GitHub Hook URL"**-t (pl. `https://packagist.org/api/github?username=mimimami&repository=maaf-core`)
 4. GitHub-on: **Settings** > **Webhooks** > **Add webhook**
 5. **Payload URL:** Add meg a másolt URL-t
 6. **Content type:** `application/json`

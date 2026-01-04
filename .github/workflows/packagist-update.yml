@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Update Packagist
         env:
-          PACKAGIST_USERNAME: Tamas-Bloch
+          PACKAGIST_USERNAME: mimimami
           PACKAGIST_REPO: maaf-core
         run: |
           echo "🚀 Updating Packagist..."
