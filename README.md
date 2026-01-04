@@ -8,6 +8,16 @@ Modular Application Architecture Framework - Core Components
 composer require maaf/core
 ```
 
+## Automatic Packagist Updates
+
+This package uses **GitHub Actions** to automatically update Packagist when you push changes.
+
+The workflow is already configured in `.github/workflows/packagist-update.yml`.
+
+**No webhook setup needed!** Just push to the `main` branch and Packagist will be updated automatically.
+
+See `PUBLISHING.md` for detailed instructions.
+
 ## Requirements
 
 - PHP >= 8.1
@@ -255,3 +265,4 @@ See [IDE Support Documentation](docs/ide-support.md) for details.
 
 MIT
 
+"# Test GitHub Actions" 
