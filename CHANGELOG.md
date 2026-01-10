@@ -1,36 +1,81 @@
 # Changelog
 
-All notable changes to MAAF Core will be documented in this file.
-
-## [1.1.0] - 2026-01-04
+## [2.1.0] - 2024-01-XX
 
 ### Added
-- **Application** - fő alkalmazás osztály egyszerű bootstrap és konfigurációhoz
-- Opcionális konfigurációs fájl támogatás (`config/maaf.php`)
-- Konvenció alapú automatikus fájlkeresés
 
-## [1.0.0] - 2026-01-04
+#### Testing Toolkit 1.0
+- ✅ `ModuleTestHelper` - Modul teszteléshez segédeszközök
+- ✅ `UseCaseTestHelper` - Use case teszteléshez segédeszközök
+- ✅ `AdapterMockHelper` - Adapter mockoláshoz segédeszközök
+- ✅ `MockQueueAdapter` - Mock queue adapter teszteléshez
+- ✅ `MockEventBusAdapter` - Mock event bus adapter teszteléshez
+- ✅ `TestCase` - Alap teszt osztály helper-ekkel
+
+## [2.0.0] - 2024-01-XX
 
 ### Added
-- ModuleLoader - automatikus modul felfedezés és regisztráció
-- ModuleRegistry - modulok nyilvántartása
-- ModuleMetadata - modul metadata osztály
-- Request - HTTP kérés kezelés body parsing-szel
-- Response - PSR-7 kompatibilis HTTP válasz
-- HttpKernel - HTTP kernel request/response kezeléssel
-- ControllerResolver - kontroller feloldás DI konténerből
-- Router - route regisztráció és dispatch
-- ContainerFactory - DI konténer helper
-- **MiddlewarePipeline** - teljes middleware pipeline rendszer
-- **MiddlewareInterface** - middleware interface
-- **LoggingMiddleware** - példa logging middleware
-- **CorsMiddleware** - példa CORS middleware
-- **RateLimitingMiddleware** - példa rate limiting middleware
+
+#### Async EventBus 2.0
+- ✅ `AsyncEventBusInterface` - Aszinkron EventBus interface
+- ✅ `AsyncEventBus` - Aszinkron EventBus implementáció
+- ✅ `EventMessage` - Esemény üzenet osztály
+- ✅ `QueueAdapterInterface` - Queue adapter interface
+- ✅ `RabbitMQAdapter` - RabbitMQ adapter implementáció
+- ✅ `RedisStreamsAdapter` - Redis Streams adapter implementáció
+- ✅ `RetryPolicy` - Retry logika exponenciális backoff-fal
+- ✅ Dead Letter Queue támogatás
+- ✅ Modulonkénti routing
+- ✅ `EventConsumeCommand` - CLI parancs event consumer futtatásához
 
 ### Changed
-- HttpKernel mostantól Router-t fogad konstruktorban (könyv szerint)
-- HttpKernel middleware pipeline támogatással bővítve
+- EventBus kiterjesztve AsyncEventBusInterface-tel
 
-### Deprecated
-- `HttpKernel::setMiddleware()` - használj `addMiddleware()` helyette
+## [1.0.0] - 2024-01-XX
 
+### Added
+
+#### DI Container 1.0
+- ✅ `ContainerInterface` - Stabil API a Dependency Injection Container számára
+- ✅ `Container` - PHP-DI alapú implementáció
+- ✅ `NotFoundException` - Exception amikor egy entry nem található
+
+#### Module Loader 3.0
+- ✅ `ModuleLoader` - Automatikus modul betöltő rendszer
+- ✅ `ModuleInterface` - Interface amit minden modulnak implementálnia kell
+- ✅ Támogatás service regisztrációhoz
+- ✅ Támogatás route regisztrációhoz
+- ✅ Támogatás event listener regisztrációhoz
+
+#### EventBus 1.0
+- ✅ `EventBusInterface` - Stabil API az eseménykezelő rendszer számára
+- ✅ `EventBus` - Eseménykezelő implementáció
+- ✅ Priority-based listener execution
+- ✅ Subscribe/Unsubscribe/Publish műveletek
+
+#### Config Engine 1.0
+- ✅ `ConfigInterface` - Stabil API a konfigurációs motor számára
+- ✅ `Config` - Konfigurációs motor implementáció
+- ✅ Dot notation támogatás
+- ✅ File-based és array-based konfiguráció betöltés
+
+#### HTTP Kernel 1.0
+- ✅ `Request` - HTTP Request osztály
+- ✅ `Response` - HTTP Response osztály
+- ✅ `MiddlewareInterface` - Middleware interface
+- ✅ `Kernel` - HTTP kernel implementáció
+- ✅ `Router` - FastRoute alapú routing rendszer
+- ✅ `Application` - Fő alkalmazás osztály
+- ✅ HTTP Exception osztályok (NotFoundException, UnauthorizedException, ForbiddenException)
+
+#### CLI 1.0
+- ✅ `CommandInterface` - CLI parancsok interface-je
+- ✅ `CommandRunner` - Parancsok futtatásáért felelős osztály
+- ✅ `Cli` - Fő CLI osztály
+- ✅ Built-in parancsok (help, route:list)
+
+### Changed
+- N/A (első stabil kiadás)
+
+### Fixed
+- N/A (első stabil kiadás)

@@ -1,267 +1,102 @@
-# MAAF Core
+# MAAF Core 1.0
 
-Modular Application Architecture Framework - Core Components
+MAAF Core Framework - Stabil kiadás
 
-## Installation
+## Komponensek
+
+- ✅ **DI Container 1.0** - Stabil Dependency Injection API
+- ✅ **Module Loader 3.0** - Modul betöltő rendszer
+- ✅ **EventBus 1.0** - Eseménykezelő rendszer
+- ✅ **Async EventBus 2.0** - Aszinkron EventBus RabbitMQ/Redis Streams támogatással
+- ✅ **Config Engine 1.0** - Konfigurációs motor
+- ✅ **HTTP Kernel 1.0** - HTTP kernel
+- ✅ **CLI 1.0** - Command Line Interface
+- ✅ **Module Generator** - Modul generátor skeleton sablonokkal
+- ✅ **Testing Toolkit 1.0** - Tesztelési segédeszközök
+
+## Telepítés
 
 ```bash
 composer require maaf/core
 ```
 
-## Automatic Packagist Updates
+## Gyors Kezdés
 
-This package uses **GitHub Actions** to automatically update Packagist when you push changes.
-
-The workflow is already configured in `.github/workflows/packagist-update.yml`.
-
-**No webhook setup needed!** Just push to the `main` branch and Packagist will be updated automatically.
-
-See `PUBLISHING.md` for detailed instructions.
-
-## Requirements
-
-- PHP >= 8.1
-- php-di/php-di ^6.4
-- nikic/fast-route ^1.3
-- psr/http-message ^2.0
-- psr/container ^2.0
-
-## Components
-
-### Application
-
-- **Application** - Main application class for easy bootstrap and configuration
-
-### Module System
-
-- **ModuleRegistry** - Stores metadata about discovered modules
-- **ModuleMetadata** - Module information container
-- **ModuleLoader** - Automatically discovers and registers modules
-
-### HTTP Layer
-
-- **Request** - HTTP request handling with body parsing
-- **Response** - PSR-7 compatible HTTP response
-- **HttpKernel** - Request/response handling kernel
-- **ControllerResolver** - Resolves controllers from DI container
-
-### Routing
-
-- **Router** - Route registration and dispatching
-
-### DI
-
-- **ContainerFactory** - Helper for creating DI containers
-
-## Quick Start
-
-### Simple Way (Recommended)
+### Application Bootstrap
 
 ```php
-<?php
-
-require_once __DIR__ . '/../vendor/autoload.php';
-
 use MAAF\Core\Application;
 
-$app = new Application(__DIR__ . '/..');
+$app = new Application(__DIR__);
 $app->run();
 ```
 
-### Advanced Way (Full Control)
+### Modul Létrehozása
 
 ```php
-<?php
-
-use MAAF\Core\Module\ModuleRegistry;
-use MAAF\Core\Module\ModuleLoader;
-use MAAF\Core\Routing\Router;
-use MAAF\Core\Http\Request;
-use MAAF\Core\Http\HttpKernel;
-use MAAF\Core\Http\ControllerResolver;
-use DI\ContainerBuilder;
-
-// 1. Build DI container
-$containerBuilder = new ContainerBuilder();
-$containerBuilder->addDefinitions('config/services.php');
-$container = $containerBuilder->build();
-
-// 2. Discover modules
-$registry = new ModuleRegistry();
-$loader = new ModuleLoader(
-    __DIR__ . '/src/Modules',
-    $registry,
-    'App\\Modules' // namespace prefix
-);
-$loader->discover();
-$loader->registerServices($containerBuilder);
-$container = $containerBuilder->build();
-
-// 3. Setup router
-$router = new Router('config/routes.php');
-$loader->registerRoutes($router);
-$dispatcher = $router->buildDispatcher();
-
-// 4. Handle request
-$resolver = new ControllerResolver($container);
-// HttpKernel accepts Router (as per MAAF book) or Dispatcher
-$kernel = new HttpKernel($router, $resolver, $container);
-
-$request = Request::fromGlobals();
-$response = $kernel->handle($request);
-$response->send();
-```
-
-## Module Structure
-
-Create a module with the following structure:
-
-```
-src/Modules/MyModule/
-├── Module.php          # Module registration
-├── Controllers/        # HTTP controllers
-├── Services/           # Business logic
-└── Repositories/       # Data access
-```
-
-**Module.php:**
-
-```php
-<?php
 namespace App\Modules\MyModule;
 
 use DI\ContainerBuilder;
+use MAAF\Core\ModuleLoader\ModuleInterface;
 use MAAF\Core\Routing\Router;
 
-final class Module
+final class Module implements ModuleInterface
 {
     public static function registerServices(ContainerBuilder $builder): void
     {
-        // Register services
+        // Service regisztráció
     }
 
     public static function registerRoutes(Router $router): void
     {
-        $router->addRoute('GET', '/my-module', [
-            MyController::class,
-            'index'
-        ]);
+        $router->get('/my-route', [MyController::class, 'index']);
     }
 }
 ```
 
-## Middleware Pipeline
-
-MAAF Core supports a full middleware pipeline system. You can chain multiple middlewares together.
-
-### Using MiddlewareInterface
+### Controller
 
 ```php
-use MAAF\Core\Http\MiddlewareInterface;
+namespace App\Modules\MyModule\Controllers;
+
 use MAAF\Core\Http\Request;
 use MAAF\Core\Http\Response;
 
-class MyMiddleware implements MiddlewareInterface
+final class MyController
 {
-    public function handle(Request $request, callable $next): Response
+    public function index(Request $request): Response
     {
-        // Before controller execution
-        // ... your logic ...
-        
-        $response = $next($request);
-        
-        // After controller execution
-        // ... your logic ...
-        
-        return $response;
+        return Response::json(['message' => 'Hello MAAF!']);
     }
 }
 ```
 
-### Using Callable Middleware
+### Tesztelés
 
 ```php
-$middleware = function (Request $request, callable $next): Response {
-    // Before controller
-    $response = $next($request);
-    // After controller
-    return $response;
-};
+use MAAF\Core\Testing\TestCase;
+
+class MyModuleTest extends TestCase
+{
+    public function testModuleLoads(): void
+    {
+        $this->moduleHelper->loadModule(MyModule::class, 'MyModule');
+        $this->moduleHelper->assertModuleLoaded('MyModule');
+    }
+}
 ```
 
-### Adding Middlewares to HttpKernel
+## Dokumentáció
 
-```php
-// Single middleware
-$kernel->addMiddleware(new LoggingMiddleware());
+- [Általános Dokumentáció](docs/README.md)
+- [Module Generator](docs/MODULE_GENERATOR.md)
+- [Async EventBus](docs/ASYNC_EVENTBUS.md)
+- [Testing Toolkit](docs/TESTING_TOOLKIT.md)
 
-// Multiple middlewares
-$kernel->addMiddlewares([
-    new CorsMiddleware(['*']),
-    new LoggingMiddleware(),
-    new RateLimitingMiddleware(100, 60),
-]);
+## Verzió
 
-// Or using callables
-$kernel->addMiddleware(function (Request $request, callable $next): Response {
-    // Custom logic
-    return $next($request);
-});
-```
+**2.1.0** - Testing Toolkit hozzáadva
 
-### Middleware Execution Order
+## Licenc
 
-Middlewares are executed in the order they are added:
-1. First middleware receives the request
-2. Calls `$next($request)` to pass to next middleware
-3. Last middleware calls the controller
-4. Response bubbles back through middlewares in reverse order
-
-**Example:**
-```php
-// Middlewares added in this order:
-$kernel->addMiddleware($middleware1);  // Executes first
-$kernel->addMiddleware($middleware2);  // Executes second
-$kernel->addMiddleware($middleware3);  // Executes third
-
-// Execution flow:
-// Request → middleware1 → middleware2 → middleware3 → Controller
-// Response ← middleware1 ← middleware2 ← middleware3 ← Controller
-```
-
-### Built-in Middlewares
-
-MAAF Core includes example middlewares:
-
-- **LoggingMiddleware** - Logs requests and responses
-- **CorsMiddleware** - Handles CORS headers
-- **RateLimitingMiddleware** - Implements rate limiting
-
-## Application Class
-
-For easier usage, use the `Application` class:
-
-```php
-use MAAF\Core\Application;
-
-$app = new Application(__DIR__ . '/..');
-$app->addMiddleware(new LoggingMiddleware());
-$app->run();
-```
-
-See [Application Class Documentation](docs/application-class.md) for more details.
-
-## IDE Support
-
-MAAF Core includes IDE support for better autocomplete and type hints:
-
-- **PhpStorm** - `.phpstorm.meta.php` for autocomplete
-- **VS Code** - `ide-helper.php` for IntelliSense
-- **Code Snippets** - Templates for quick development
-
-See [IDE Support Documentation](docs/ide-support.md) for details.
-
-## License
-
-MIT 
-"# Test webhook without token" 
+MIT License
