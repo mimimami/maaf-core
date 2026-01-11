@@ -4,6 +4,14 @@ declare(strict_types=1);
 
 namespace MAAF\Core\ModuleGenerator;
 
+use MAAF\Core\ModuleGenerator\Templates\AuthModuleTemplate;
+use MAAF\Core\ModuleGenerator\Templates\ApiModuleTemplate;
+use MAAF\Core\ModuleGenerator\Templates\BasicModuleTemplate;
+use MAAF\Core\ModuleGenerator\Templates\CourseModuleTemplate;
+use MAAF\Core\ModuleGenerator\Templates\CrudModuleTemplate;
+use MAAF\Core\ModuleGenerator\Templates\InstitutionModuleTemplate;
+use MAAF\Core\ModuleGenerator\Templates\UserModuleTemplate;
+
 /**
  * Module Generator
  * 
@@ -34,6 +42,9 @@ final class ModuleGenerator
         $this->templates['api'] = new ApiModuleTemplate();
         $this->templates['crud'] = new CrudModuleTemplate();
         $this->templates['auth'] = new AuthModuleTemplate();
+        $this->templates['user'] = new UserModuleTemplate();
+        $this->templates['course'] = new CourseModuleTemplate();
+        $this->templates['institution'] = new InstitutionModuleTemplate();
     }
 
     /**

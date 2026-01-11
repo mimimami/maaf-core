@@ -11,7 +11,7 @@ use MAAF\Core\ModuleGenerator\ModuleTemplate;
 /**
  * CRUD Module Template
  * 
- * CRUD modul sablon repository pattern-nel.
+ * CRUD modul sablon Hexagonal / Clean Architecture struktúrával.
  * 
  * @version 1.0.0
  */
@@ -24,357 +24,757 @@ final class CrudModuleTemplate implements ModuleTemplate
 
     public function getDescription(): string
     {
-        return 'CRUD module with repository pattern';
+        return 'CRUD module with repository pattern (Hexagonal Architecture)';
     }
 
+    /**
+     * @return GeneratedFile[]
+     */
     public function getFiles(ModuleMetadata $metadata): array
     {
-        $files = [];
+        $moduleName = $metadata->name;
+        $className  = ucfirst($moduleName);
+        $namespace  = $metadata->namespace . '\\' . $moduleName;
 
-        // Module.php
-        $files[] = new GeneratedFile(
-            'Module.php',
-            $this->generateModuleFile($metadata)
-        );
+        return [
+            // Gyökér szint
+            new GeneratedFile(
+                $className . 'Module.php',
+                $this->getModuleClassContent($namespace, $className, $moduleName, $metadata),
+            ),
+            new GeneratedFile(
+                'composer.json',
+                $this->getComposerJsonContent($namespace, $moduleName, $metadata),
+            ),
+            new GeneratedFile(
+                'routes.php',
+                $this->getRoutesContent($namespace, $className),
+            ),
 
-        // Controller
-        $files[] = new GeneratedFile(
-            'Controllers/' . $metadata->name . 'Controller.php',
-            $this->generateControllerFile($metadata)
-        );
+            // Domain réteg
+            new GeneratedFile(
+                'Domain/Model/' . $className . '.php',
+                $this->getDomainModelContent($namespace, $className),
+            ),
+            new GeneratedFile(
+                'Domain/Repository/' . $className . 'RepositoryInterface.php',
+                $this->getDomainRepositoryInterfaceContent($namespace, $className),
+            ),
+            new GeneratedFile(
+                'Domain/Service/' . $className . 'ServiceInterface.php',
+                $this->getDomainServiceInterfaceContent($namespace, $className),
+            ),
+            new GeneratedFile(
+                'Domain/Exception/' . $className . 'NotFoundException.php',
+                $this->getDomainNotFoundExceptionContent($namespace, $className),
+            ),
 
-        // Service
-        $files[] = new GeneratedFile(
-            'Services/' . $metadata->name . 'Service.php',
-            $this->generateServiceFile($metadata)
-        );
+            // Application réteg
+            new GeneratedFile(
+                'Application/DTO/' . $className . 'RequestDTO.php',
+                $this->getApplicationRequestDtoContent($namespace, $className),
+            ),
+            new GeneratedFile(
+                'Application/DTO/' . $className . 'ResponseDTO.php',
+                $this->getApplicationResponseDtoContent($namespace, $className),
+            ),
+            new GeneratedFile(
+                'Application/Validator/' . $className . 'RequestValidator.php',
+                $this->getApplicationRequestValidatorContent($namespace, $className),
+            ),
+            new GeneratedFile(
+                'Application/Service/' . $className . 'Service.php',
+                $this->getApplicationServiceContent($namespace, $className),
+            ),
 
-        // Repository
-        $files[] = new GeneratedFile(
-            'Repositories/' . $metadata->name . 'Repository.php',
-            $this->generateRepositoryFile($metadata)
-        );
+            // Infrastructure réteg
+            new GeneratedFile(
+                'Infrastructure/Repository/InMemory' . $className . 'Repository.php',
+                $this->getInfrastructureRepositoryContent($namespace, $className),
+            ),
 
-        // Model
-        $files[] = new GeneratedFile(
-            'Models/' . $metadata->name . '.php',
-            $this->generateModelFile($metadata)
-        );
-
-        return $files;
+            // Presentation réteg (HTTP)
+            new GeneratedFile(
+                'Presentation/Http/Request/' . $className . 'Request.php',
+                $this->getPresentationRequestContent($namespace, $className),
+            ),
+            new GeneratedFile(
+                'Presentation/Http/Response/' . $className . 'Response.php',
+                $this->getPresentationResponseContent($namespace, $className),
+            ),
+            new GeneratedFile(
+                'Presentation/Http/Controller/' . $className . 'Controller.php',
+                $this->getPresentationControllerContent($namespace, $className),
+            ),
+        ];
     }
 
-    private function generateModuleFile(ModuleMetadata $metadata): string
+    private function getModuleClassContent(string $namespace, string $className, string $moduleName, ModuleMetadata $metadata): string
     {
-        $controllerClass = $metadata->getControllerNamespace() . '\\' . $metadata->name . 'Controller';
-        $serviceClass = $metadata->getServiceNamespace() . '\\' . $metadata->name . 'Service';
-        $repositoryClass = $metadata->getRepositoryNamespace() . '\\' . $metadata->name . 'Repository';
-        $routePrefix = $this->getRoutePrefix($metadata->name);
-        
         return <<<PHP
 <?php
 
 declare(strict_types=1);
 
-namespace {$metadata->getFullClassName()};
+namespace {$namespace};
 
-use DI\ContainerBuilder;
-use MAAF\Core\ModuleLoader\ModuleInterface;
-use MAAF\Core\Routing\Router;
+use MAAF\\Module\\Module as BaseModule;
+use DI\\ContainerBuilder;
+use MAAF\\Core\\Routing\\Router;
 
-/**
- * {$metadata->name} Module
- * 
-{$this->generateDocComment($metadata)}
- */
-final class Module implements ModuleInterface
+final class {$className}Module extends BaseModule
 {
-    public static function registerServices(ContainerBuilder \$builder): void
+    public function getName(): string
+    {
+        return '{$moduleName}';
+    }
+
+    public function getVersion(): string
+    {
+        return '{$metadata->version}';
+    }
+
+    public function getDescription(): string
+    {
+        return '{$metadata->description}';
+    }
+
+    public function registerServices(ContainerBuilder \$builder): void
     {
         \$builder->addDefinitions([
-            {$repositoryClass}::class => DI\create({$repositoryClass}::class),
-            {$serviceClass}::class => DI\create({$serviceClass}::class)
-                ->constructor(DI\get({$repositoryClass}::class)),
+            Domain\\Repository\\{$className}RepositoryInterface::class => DI\create(Infrastructure\\Repository\\InMemory{$className}Repository::class),
+            Domain\\Service\\{$className}ServiceInterface::class => DI\create(Application\\Service\\{$className}Service::class)
+                ->constructor(
+                    DI\get(Domain\\Repository\\{$className}RepositoryInterface::class),
+                    DI\create(Application\\Validator\\{$className}RequestValidator::class)
+                ),
         ]);
     }
 
-    public static function registerRoutes(Router \$router): void
+    public function registerRoutes(Router \$router): void
     {
-        \$router->get('/{$routePrefix}', [
-            {$controllerClass}::class,
-            'index'
-        ]);
+        \$routes = require __DIR__ . '/routes.php';
+        \$routes(\$router);
+    }
 
-        \$router->get('/{$routePrefix}/{id}', [
-            {$controllerClass}::class,
-            'show'
-        ]);
+    public function boot(): void
+    {
+        // Called when module is loaded
+    }
 
-        \$router->post('/{$routePrefix}', [
-            {$controllerClass}::class,
-            'create'
-        ]);
+    public function activate(): void
+    {
+        // Called when module is activated
+    }
 
-        \$router->put('/{$routePrefix}/{id}', [
-            {$controllerClass}::class,
-            'update'
-        ]);
-
-        \$router->delete('/{$routePrefix}/{id}', [
-            {$controllerClass}::class,
-            'delete'
-        ]);
+    public function deactivate(): void
+    {
+        // Called when module is deactivated
     }
 }
+
 PHP;
     }
 
-    private function generateControllerFile(ModuleMetadata $metadata): string
+    private function getComposerJsonContent(string $namespace, string $moduleName, ModuleMetadata $metadata): string
     {
-        $serviceClass = $metadata->getServiceNamespace() . '\\' . $metadata->name . 'Service';
+        \$packageName = strtolower(str_replace('\\\\', '/', \$namespace));
         
+        return <<<JSON
+{
+    "name": "{\$packageName}",
+    "description": "{$metadata->description}",
+    "type": "maaf-module",
+    "keywords": ["maaf", "module", "{$moduleName}"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "{$metadata->author}",
+            "email": ""
+        }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "maaf/core": "^2.0",
+        "maaf/module": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "{$namespace}\\\\": ""
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
+
+JSON;
+    }
+
+    private function getRoutesContent(string $namespace, string $className): string
+    {
+        \$base = strtolower(\$className);
+        \$base = preg_replace('/([A-Z])/', '-$1', lcfirst(\$base));
+
+        return <<<PHP
+<?php
+
+use MAAF\\Core\\Routing\\Router;
+use {$namespace}\\Presentation\\Http\\Controller\\{$className}Controller;
+
+return function (Router \$router): void {
+    \$router->get('/{$base}', [{$className}Controller::class, 'index']);
+    \$router->get('/{$base}/{id}', [{$className}Controller::class, 'show']);
+    \$router->post('/{$base}', [{$className}Controller::class, 'create']);
+    \$router->put('/{$base}/{id}', [{$className}Controller::class, 'update']);
+    \$router->delete('/{$base}/{id}', [{$className}Controller::class, 'delete']);
+};
+
+PHP;
+    }
+
+    private function getDomainModelContent(string $namespace, string $className): string
+    {
         return <<<PHP
 <?php
 
 declare(strict_types=1);
 
-namespace {$metadata->getControllerNamespace()};
+namespace {$namespace}\\Domain\\Model;
 
-use MAAF\Core\Http\Request;
-use MAAF\Core\Http\Response;
-use {$serviceClass};
-
-/**
- * {$metadata->name} Controller
- * 
-{$this->generateDocComment($metadata)}
- */
-final class {$metadata->name}Controller
+final class {$className}
 {
     public function __construct(
-        private readonly {$metadata->name}Service \$service
-    ) {
+        private string \$id,
+        private string \$name,
+    ) {}
+
+    public function getId(): string
+    {
+        return \$this->id;
     }
 
-    public function index(Request \$request): Response
+    public function getName(): string
     {
-        \$items = \$this->service->getAll();
-        return Response::json(['data' => \$items]);
+        return \$this->name;
     }
 
-    public function show(Request \$request, string \$id): Response
+    public function updateName(string \$name): void
     {
-        \$item = \$this->service->getById((int) \$id);
-        
-        if (\$item === null) {
-            return Response::json(['error' => 'Not found'], 404);
-        }
-        
-        return Response::json(['data' => \$item]);
-    }
-
-    public function create(Request \$request): Response
-    {
-        \$data = \$request->getParsedBody();
-        \$item = \$this->service->create(\$data);
-        return Response::json(['data' => \$item], 201);
-    }
-
-    public function update(Request \$request, string \$id): Response
-    {
-        \$data = \$request->getParsedBody();
-        \$item = \$this->service->update((int) \$id, \$data);
-        
-        if (\$item === null) {
-            return Response::json(['error' => 'Not found'], 404);
-        }
-        
-        return Response::json(['data' => \$item]);
-    }
-
-    public function delete(Request \$request, string \$id): Response
-    {
-        \$deleted = \$this->service->delete((int) \$id);
-        
-        if (!\$deleted) {
-            return Response::json(['error' => 'Not found'], 404);
-        }
-        
-        return Response::json(['message' => 'Deleted'], 204);
+        \$this->name = \$name;
     }
 }
+
 PHP;
     }
 
-    private function generateServiceFile(ModuleMetadata $metadata): string
+    private function getDomainRepositoryInterfaceContent(string $namespace, string $className): string
     {
-        $repositoryClass = $metadata->getRepositoryNamespace() . '\\' . $metadata->name . 'Repository';
-        $modelClass = $metadata->getModelNamespace() . '\\' . $metadata->name;
-        
         return <<<PHP
 <?php
 
 declare(strict_types=1);
 
-namespace {$metadata->getServiceNamespace()};
+namespace {$namespace}\\Domain\\Repository;
 
-use {$repositoryClass};
-use {$modelClass};
+use {$namespace}\\Domain\\Model\\{$className};
 
-/**
- * {$metadata->name} Service
- * 
-{$this->generateDocComment($metadata)}
- */
-final class {$metadata->name}Service
+interface {$className}RepositoryInterface
+{
+    /**
+     * @return {$className}[]
+     */
+    public function findAll(): array;
+
+    public function findById(string \$id): ?{$className};
+
+    public function save({$className} \$item): {$className};
+
+    public function delete(string \$id): bool;
+}
+
+PHP;
+    }
+
+    private function getDomainServiceInterfaceContent(string $namespace, string $className): string
+    {
+        return <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace {$namespace}\\Domain\\Service;
+
+use {$namespace}\\Domain\\Model\\{$className};
+
+interface {$className}ServiceInterface
+{
+    /**
+     * @return {$className}[]
+     */
+    public function list(): array;
+
+    public function get(string \$id): {$className};
+
+    public function create(string \$name): {$className};
+
+    public function update(string \$id, array \$data): {$className};
+
+    public function delete(string \$id): void;
+}
+
+PHP;
+    }
+
+    private function getDomainNotFoundExceptionContent(string $namespace, string $className): string
+    {
+        return <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace {$namespace}\\Domain\\Exception;
+
+final class {$className}NotFoundException extends \\RuntimeException
+{
+}
+
+PHP;
+    }
+
+    private function getApplicationRequestDtoContent(string $namespace, string $className): string
+    {
+        return <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace {$namespace}\\Application\\DTO;
+
+final class {$className}RequestDTO
 {
     public function __construct(
-        private readonly {$metadata->name}Repository \$repository
-    ) {
+        private ?string \$id = null,
+        private ?string \$name = null,
+    ) {}
+
+    public function getId(): ?string
+    {
+        return \$this->id;
     }
 
-    /**
-     * @return array<int, {$metadata->name}>
-     */
-    public function getAll(): array
+    public function getName(): ?string
     {
-        return \$this->repository->findAll();
-    }
-
-    public function getById(int \$id): ?{$metadata->name}
-    {
-        return \$this->repository->findById(\$id);
-    }
-
-    public function create(array \$data): {$metadata->name}
-    {
-        \$item = new {$metadata->name}();
-        // TODO: Set properties from \$data
-        return \$this->repository->save(\$item);
-    }
-
-    public function update(int \$id, array \$data): ?{$metadata->name}
-    {
-        \$item = \$this->repository->findById(\$id);
-        
-        if (\$item === null) {
-            return null;
-        }
-        
-        // TODO: Update properties from \$data
-        return \$this->repository->save(\$item);
-    }
-
-    public function delete(int \$id): bool
-    {
-        return \$this->repository->delete(\$id);
+        return \$this->name;
     }
 }
+
 PHP;
     }
 
-    private function generateRepositoryFile(ModuleMetadata $metadata): string
+    private function getApplicationResponseDtoContent(string $namespace, string $className): string
     {
-        $modelClass = $metadata->getModelNamespace() . '\\' . $metadata->name;
-        
         return <<<PHP
 <?php
 
 declare(strict_types=1);
 
-namespace {$metadata->getRepositoryNamespace()};
+namespace {$namespace}\\Application\\DTO;
 
-use {$modelClass};
+final class {$className}ResponseDTO
+{
+    public function __construct(
+        private string \$id,
+        private string \$name,
+    ) {}
 
-/**
- * {$metadata->name} Repository
- * 
-{$this->generateDocComment($metadata)}
- */
-final class {$metadata->name}Repository
+    public function getId(): string
+    {
+        return \$this->id;
+    }
+
+    public function getName(): string
+    {
+        return \$this->name;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'id' => \$this->id,
+            'name' => \$this->name,
+        ];
+    }
+}
+
+PHP;
+    }
+
+    private function getApplicationRequestValidatorContent(string $namespace, string $className): string
+    {
+        return <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace {$namespace}\\Application\\Validator;
+
+use {$namespace}\\Application\\DTO\\{$className}RequestDTO;
+
+final class {$className}RequestValidator
 {
     /**
-     * @return array<int, {$metadata->name}>
+     * @return string[] Hibák listája
      */
-    public function findAll(): array
+    public function validateForList(): array
     {
-        // TODO: Implement database query
         return [];
     }
 
-    public function findById(int \$id): ?{$metadata->name}
+    /**
+     * @return string[] Hibák listája
+     */
+    public function validateForGet({$className}RequestDTO \$dto): array
     {
-        // TODO: Implement database query
-        return null;
+        \$errors = [];
+
+        if (\$dto->getId() === null || \$dto->getId() === '') {
+            \$errors[] = 'ID is required';
+        }
+
+        return \$errors;
     }
 
-    public function save({$metadata->name} \$item): {$metadata->name}
+    /**
+     * @return string[] Hibák listája
+     */
+    public function validateForCreate({$className}RequestDTO \$dto): array
     {
-        // TODO: Implement save logic
-        return \$item;
+        \$errors = [];
+
+        if (\$dto->getName() === null || \$dto->getName() === '') {
+            \$errors[] = 'Name is required';
+        }
+
+        return \$errors;
     }
 
-    public function delete(int \$id): bool
+    /**
+     * @return string[] Hibák listája
+     */
+    public function validateForUpdate({$className}RequestDTO \$dto): array
     {
-        // TODO: Implement delete logic
-        return false;
+        \$errors = [];
+
+        if (\$dto->getId() === null || \$dto->getId() === '') {
+            \$errors[] = 'ID is required';
+        }
+
+        return \$errors;
     }
 }
+
 PHP;
     }
 
-    private function generateModelFile(ModuleMetadata $metadata): string
+    private function getApplicationServiceContent(string $namespace, string $className): string
     {
         return <<<PHP
 <?php
 
 declare(strict_types=1);
 
-namespace {$metadata->getModelNamespace()};
+namespace {$namespace}\\Application\\Service;
 
-/**
- * {$metadata->name} Model
- * 
-{$this->generateDocComment($metadata)}
- */
-final class {$metadata->name}
+use {$namespace}\\Application\\DTO\\{$className}RequestDTO;
+use {$namespace}\\Application\\DTO\\{$className}ResponseDTO;
+use {$namespace}\\Application\\Validator\\{$className}RequestValidator;
+use {$namespace}\\Domain\\Exception\\{$className}NotFoundException;
+use {$namespace}\\Domain\\Repository\\{$className}RepositoryInterface;
+use {$namespace}\\Domain\\Service\\{$className}ServiceInterface;
+
+final class {$className}Service implements {$className}ServiceInterface
 {
-    public int \$id;
-    public string \$name;
-    public \DateTimeImmutable \$createdAt;
-    public \DateTimeImmutable \$updatedAt;
+    public function __construct(
+        private {$className}RepositoryInterface \$repository,
+        private {$className}RequestValidator \$validator,
+    ) {}
 
-    public function __construct()
+    public function list(): array
     {
-        \$this->createdAt = new \DateTimeImmutable();
-        \$this->updatedAt = new \DateTimeImmutable();
+        \$items = \$this->repository->findAll();
+
+        return array_map(
+            fn(\$item) => new {$className}ResponseDTO(\$item->getId(), \$item->getName()),
+            \$items
+        );
+    }
+
+    public function get(string \$id)
+    {
+        \$dto = new {$className}RequestDTO(id: \$id);
+
+        \$errors = \$this->validator->validateForGet(\$dto);
+        if (\$errors !== []) {
+            throw new \\InvalidArgumentException(implode('; ', \$errors));
+        }
+
+        \$item = \$this->repository->findById(\$id);
+        if (!\$item) {
+            throw new {$className}NotFoundException("{$className} not found: {\$id}");
+        }
+
+        return new {$className}ResponseDTO(\$item->getId(), \$item->getName());
+    }
+
+    public function create(string \$name): \{$namespace}\\Domain\\Model\\{$className}
+    {
+        \$dto = new {$className}RequestDTO(name: \$name);
+
+        \$errors = \$this->validator->validateForCreate(\$dto);
+        if (\$errors !== []) {
+            throw new \\InvalidArgumentException(implode('; ', \$errors));
+        }
+
+        \$item = new \{$namespace}\\Domain\\Model\\{$className}(
+            id: uniqid('{$className}_', true),
+            name: \$name
+        );
+
+        return \$this->repository->save(\$item);
+    }
+
+    public function update(string \$id, array \$data): \{$namespace}\\Domain\\Model\\{$className}
+    {
+        \$dto = new {$className}RequestDTO(
+            id: \$id,
+            name: \$data['name'] ?? null
+        );
+
+        \$errors = \$this->validator->validateForUpdate(\$dto);
+        if (\$errors !== []) {
+            throw new \\InvalidArgumentException(implode('; ', \$errors));
+        }
+
+        \$item = \$this->repository->findById(\$id);
+        if (!\$item) {
+            throw new {$className}NotFoundException("{$className} not found: {\$id}");
+        }
+
+        if (\$dto->getName() !== null) {
+            \$item->updateName(\$dto->getName());
+        }
+
+        return \$this->repository->save(\$item);
+    }
+
+    public function delete(string \$id): void
+    {
+        \$item = \$this->repository->findById(\$id);
+        if (!\$item) {
+            throw new {$className}NotFoundException("{$className} not found: {\$id}");
+        }
+
+        \$this->repository->delete(\$id);
     }
 }
+
 PHP;
     }
 
-    private function generateDocComment(ModuleMetadata $metadata): string
+    private function getInfrastructureRepositoryContent(string $namespace, string $className): string
     {
-        $lines = [];
-        
-        if ($metadata->description) {
-            $lines[] = ' * ' . $metadata->description;
-        }
-        
-        if ($metadata->version) {
-            $lines[] = ' * ';
-            $lines[] = ' * @version ' . $metadata->version;
-        }
-        
-        if ($metadata->author) {
-            $lines[] = ' * @author ' . $metadata->author;
-        }
+        return <<<PHP
+<?php
 
-        return implode("\n", $lines);
+declare(strict_types=1);
+
+namespace {$namespace}\\Infrastructure\\Repository;
+
+use {$namespace}\\Domain\\Model\\{$className};
+use {$namespace}\\Domain\\Repository\\{$className}RepositoryInterface;
+
+/**
+ * In-memory repository példa.
+ * Később cserélhető adatbázisos implementációra.
+ */
+final class InMemory{$className}Repository implements {$className}RepositoryInterface
+{
+    /** @var array<string, {$className}> */
+    private array \$items = [];
+
+    public function __construct()
+    {
+        \$this->items = [
+            '1' => new {$className}('1', 'First'),
+            '2' => new {$className}('2', 'Second'),
+        ];
     }
 
-    private function getRoutePrefix(string $moduleName): string
+    public function findAll(): array
     {
-        return strtolower(preg_replace('/([A-Z])/', '-$1', lcfirst($moduleName)));
+        return array_values(\$this->items);
+    }
+
+    public function findById(string \$id): ?{$className}
+    {
+        return \$this->items[\$id] ?? null;
+    }
+
+    public function save({$className} \$item): {$className}
+    {
+        \$this->items[\$item->getId()] = \$item;
+        return \$item;
+    }
+
+    public function delete(string \$id): bool
+    {
+        if (isset(\$this->items[\$id])) {
+            unset(\$this->items[\$id]);
+            return true;
+        }
+        return false;
+    }
+}
+
+PHP;
+    }
+
+    private function getPresentationRequestContent(string $namespace, string $className): string
+    {
+        return <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace {$namespace}\\Presentation\\Http\\Request;
+
+/**
+ * HTTP request wrapper példa.
+ * Később integrálható konkrét HTTP request objektummal.
+ */
+final class {$className}Request
+{
+    public function __construct(
+        private array \$queryParams = [],
+        private array \$bodyParams = [],
+    ) {}
+
+    public function getId(): ?string
+    {
+        return \$this->queryParams['id'] ?? null;
+    }
+
+    public function getName(): ?string
+    {
+        return \$this->bodyParams['name'] ?? null;
+    }
+
+    public function getAll(): array
+    {
+        return [
+            'query' => \$this->queryParams,
+            'body'  => \$this->bodyParams,
+        ];
+    }
+}
+
+PHP;
+    }
+
+    private function getPresentationResponseContent(string $namespace, string $className): string
+    {
+        return <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace {$namespace}\\Presentation\\Http\\Response;
+
+use {$namespace}\\Application\\DTO\\{$className}ResponseDTO;
+
+final class {$className}Response
+{
+    /**
+     * @param {$className}ResponseDTO[] \$items
+     */
+    public static function list(array \$items): array
+    {
+        return array_map(
+            fn({$className}ResponseDTO \$dto) => \$dto->toArray(),
+            \$items
+        );
+    }
+
+    public static function single({$className}ResponseDTO \$dto): array
+    {
+        return \$dto->toArray();
+    }
+}
+
+PHP;
+    }
+
+    private function getPresentationControllerContent(string $namespace, string $className): string
+    {
+        return <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace {$namespace}\\Presentation\\Http\\Controller;
+
+use {$namespace}\\Application\\Service\\{$className}Service;
+use {$namespace}\\Presentation\\Http\\Request\\{$className}Request;
+use {$namespace}\\Presentation\\Http\\Response\\{$className}Response;
+
+final class {$className}Controller
+{
+    public function __construct(
+        private {$className}Service \$service,
+    ) {}
+
+    public function index(): array
+    {
+        \$items = \$this->service->list();
+
+        return {$className}Response::list(\$items);
+    }
+
+    public function show(string \$id): array
+    {
+        \$item = \$this->service->get(\$id);
+
+        return {$className}Response::single(\$item);
+    }
+
+    public function create({$className}Request \$request): array
+    {
+        \$item = \$this->service->create(\$request->getName() ?? '');
+
+        return [
+            'id' => \$item->getId(),
+            'name' => \$item->getName(),
+        ];
+    }
+
+    public function update(string \$id, {$className}Request \$request): array
+    {
+        \$data = \$request->getAll()['body'];
+        \$item = \$this->service->update(\$id, \$data);
+
+        return [
+            'id' => \$item->getId(),
+            'name' => \$item->getName(),
+        ];
+    }
+
+    public function delete(string \$id): array
+    {
+        \$this->service->delete(\$id);
+        return ['message' => '{$className} deleted'];
+    }
+}
+
+PHP;
     }
 }

@@ -43,8 +43,8 @@ final class MakeModuleCommand implements CommandInterface
             echo "❌ Module name required\n";
             echo "Usage: php maaf make:module ModuleName [options]\n";
             echo "\nOptions:\n";
-            echo "  --template=TEMPLATE    Template type (api, crud, auth, basic)\n";
-            echo "  --namespace=NS         Module namespace (default: App\\Modules)\n";
+            echo "  --template=TEMPLATE    Template type (basic, api, crud, auth, user, course, institution)\n";
+            echo "  --namespace=NS         Module namespace (default: Modules)\n";
             echo "  --path=PATH            Modules directory path\n";
             echo "  --interactive          Interactive mode\n";
             return 1;
@@ -82,13 +82,14 @@ final class MakeModuleCommand implements CommandInterface
         echo str_repeat("=", 50) . "\n\n";
 
         // Template selection
-        $templates = ['basic', 'api', 'crud', 'auth'];
+        $templates = ['basic', 'api', 'crud', 'auth', 'user', 'course', 'institution'];
         echo "Available templates:\n";
         foreach ($templates as $i => $template) {
+            $templateName = $this->generator->getAvailableTemplates()[$template] ?? $template;
             echo "  " . ($i + 1) . ". {$template}\n";
         }
         
-        echo "\nSelect template [1-4] (default: basic): ";
+        echo "\nSelect template [1-7] (default: basic): ";
         $templateInput = trim(fgets(STDIN) ?: '1');
         $templateIndex = (int) $templateInput - 1;
         
@@ -101,9 +102,9 @@ final class MakeModuleCommand implements CommandInterface
 
         // Namespace
         if (!isset($options['namespace'])) {
-            echo "Module namespace [App\\Modules]: ";
-            $namespace = trim(fgets(STDIN) ?: 'App\\Modules');
-            $options['namespace'] = $namespace ?: 'App\\Modules';
+            echo "Module namespace [Modules]: ";
+            $namespace = trim(fgets(STDIN) ?: 'Modules');
+            $options['namespace'] = $namespace ?: 'Modules';
         }
 
         // Path
@@ -146,8 +147,8 @@ final class MakeModuleCommand implements CommandInterface
     private function generateModule(string $moduleName, array $options): int
     {
         $template = $options['template'] ?? 'basic';
-        $namespace = $options['namespace'] ?? 'App\\Modules';
-        $path = $options['path'] ?? 'src/Modules';
+        $namespace = $options['namespace'] ?? 'Modules';
+        $path = $options['path'] ?? 'modules';
 
         // Create metadata
         $metadata = new ModuleMetadata(
