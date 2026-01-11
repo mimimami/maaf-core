@@ -14,7 +14,7 @@
         "php": ">=8.1",
         "php-di/php-di": "^6.1",
         "nikic/fast-route": "^1.3",
-        "php-amqplib/php-amqplib": "^4.0",
+        "php-amqplib/php-amqplib": "^3.0",
         "predis/predis": "^2.0"
     },
     "require-dev": {
@@ -34,7 +34,9 @@
             "MAAF\\Core\\Tests\\": "tests/"
         }
     },
-"bin": [ "bin/maaf" ];
+    "bin": [
+        "bin/maaf"
+    ],
     "minimum-stability": "stable",
     "prefer-stable": true
 }
