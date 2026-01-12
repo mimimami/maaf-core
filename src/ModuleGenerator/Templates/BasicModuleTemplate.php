@@ -205,7 +205,7 @@ JSON;
 
     private function getRoutesContent(string $namespace, string $className): string
     {
-        \$base = strtolower(\$className);
+        $base = strtolower($className);
 
         return <<<PHP
 <?php

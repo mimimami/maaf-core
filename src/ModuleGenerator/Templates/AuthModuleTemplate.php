@@ -186,11 +186,11 @@ PHP;
 
     private function getComposerJsonContent(string $namespace, string $moduleName, ModuleMetadata $metadata): string
     {
-        \$packageName = strtolower(str_replace('\\\\', '/', \$namespace));
+        $packageName = strtolower(str_replace('\\', '/', $namespace));
         
         return <<<JSON
 {
-    "name": "{\$packageName}",
+    "name": "{$packageName}",
     "description": "{$metadata->description}",
     "type": "maaf-module",
     "keywords": ["maaf", "module", "{$moduleName}"],
